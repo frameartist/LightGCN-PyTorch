@@ -20,7 +20,7 @@ import multiprocessing
 from sklearn.metrics import roc_auc_score
 
 
-CORES = multiprocessing.cpu_count() // 2
+CORES = multiprocessing.cpu_count() #// 2
 
 
 def BPR_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=None):
@@ -55,6 +55,39 @@ def BPR_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=N
     time_info = timer.dict()
     timer.zero()
     return f"loss{aver_loss:.3f}-{time_info}"
+
+def MSE_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=None):
+    Recmodel = recommend_model
+    Recmodel.train()
+    mse: utils.MSELoss = loss_class
+    
+    with timer(name="Sample"):
+        S = utils.UniformSample_original(dataset)
+    users = torch.Tensor(S[:, 0]).long()
+    items = torch.Tensor(S[:, 1]).long()
+    ratings = torch.Tensor(S[:, 2]).long()
+
+    users = users.to(world.device)
+    items = items.to(world.device)
+    ratings = ratings.to(world.device)
+    users, items, ratings = utils.shuffle(users, items, ratings)
+    total_batch = len(users) // world.config['bpr_batch_size'] + 1
+    aver_loss = 0.
+    for (batch_i,
+         (batch_users,
+          batch_items,
+          batch_ratings)) in enumerate(utils.minibatch(users,
+                                                   items,
+                                                   ratings,
+                                                   batch_size=world.config['bpr_batch_size'])):
+        cri = mse.stageOne(batch_users, batch_items, batch_ratings)
+        aver_loss += cri
+        if world.tensorboard:
+            w.add_scalar(f'BPRLoss/BPR', cri, epoch * int(len(users) / world.config['bpr_batch_size']) + batch_i)
+    aver_loss = aver_loss / total_batch
+    time_info = timer.dict()
+    timer.zero()
+    return f"loss {aver_loss:.3f}-{time_info}"
     
     
 def test_one_batch(X):
@@ -107,9 +140,15 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             #rating = rating.cpu()
             exclude_index = []
             exclude_items = []
-            for range_i, items in enumerate(allPos):
+
+            # Exclude test data that appears in train data
+            '''for range_i, items in enumerate(allPos):
                 exclude_index.extend([range_i] * len(items))
                 exclude_items.extend(items)
+                '''
+            # Commented out for testing purpose ^
+            # Because temporarily the train and test data are the same
+
             rating[exclude_index, exclude_items] = -(1<<10)
             _, rating_K = torch.topk(rating, k=max_K)
             rating = rating.cpu().numpy()

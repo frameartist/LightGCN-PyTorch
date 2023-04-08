@@ -48,15 +48,39 @@ class BPRLoss:
         self.opt.step()
 
         return loss.cpu().item()
+    
+class MSELoss:
+    def __init__(self,
+                 recmodel : PairWiseModel,
+                 config : dict):
+        self.model = recmodel
+        self.weight_decay = config['decay']
+        self.lr = config['lr']
+        self.opt = optim.Adam(recmodel.parameters(), lr=self.lr)
+
+    def stageOne(self, users, items, actual_score):
+        loss, reg_loss = self.model.mse_loss(users, items, actual_score)
+        reg_loss = reg_loss*self.weight_decay
+        loss = loss + reg_loss
+
+        self.opt.zero_grad()
+        loss.backward()
+        self.opt.step()
+
+        return loss.cpu().item()
+
 
 
 def UniformSample_original(dataset, neg_ratio = 1):
     dataset : BasicDataset
     allPos = dataset.allPos
     start = time()
-    if sample_ext:
-        S = sampling.sample_negative(dataset.n_users, dataset.m_items,
-                                     dataset.trainDataSize, allPos, neg_ratio)
+    if sample_ext: 
+        # Not using this
+        '''S = sampling.sample_negative(dataset.n_users, dataset.m_items,
+                                     dataset.trainDataSize, allPos, neg_ratio)'''
+        # Use this
+        S = UniformSampleForMSE(dataset)
     else:
         S = UniformSample_original_python(dataset)
     return S
@@ -95,6 +119,27 @@ def UniformSample_original_python(dataset):
     total = time() - total_start
     return np.array(S)
 
+def UniformSampleForMSE(dataset):
+    """
+    the original impliment of BPR Sampling in LightGCN
+    :return:
+        np.array
+    """
+    total_start = time()
+    dataset : BasicDataset
+    user_num = dataset.trainDataSize
+    record_indices = np.random.randint(0, user_num, user_num)
+    S = []
+    sample_time1 = 0.
+    sample_time2 = 0.
+    for i, item_index in enumerate(record_indices):
+        start = time()
+        S.append([dataset.trainUser[item_index], dataset.trainItem[item_index], dataset.trainRating[item_index]])
+        end = time()
+        sample_time1 += end - start
+    total = time() - total_start
+    return np.array(S)
+
 # ===================end samplers==========================
 # =====================utils====================================
 
@@ -108,7 +153,7 @@ def set_seed(seed):
 def getFileName():
     if world.model_name == 'mf':
         file = f"mf-{world.dataset}-{world.config['latent_dim_rec']}.pth.tar"
-    elif world.model_name == 'lgn':
+    elif world.model_name == 'lgn' or world.model_name == 'lmse':
         file = f"lgn-{world.dataset}-{world.config['lightGCN_n_layers']}-{world.config['latent_dim_rec']}.pth.tar"
     return os.path.join(world.FILE_PATH,file)
 
