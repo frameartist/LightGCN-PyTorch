@@ -376,7 +376,7 @@ class Loader(BasicDataset):
             dict: {user: [items]}
         """
         test_data = {}
-        for i, item in enumerate(self.testItem[:100]):
+        for i, item in enumerate(self.testItem):
             user = self.testUser[i]
             if test_data.get(user):
                 test_data[user].append(item)
