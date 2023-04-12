@@ -9,6 +9,7 @@ Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network 
 import os
 from os.path import join
 import torch
+
 from enum import Enum
 from parse import parse_args
 import multiprocessing
@@ -49,7 +50,7 @@ config['bigdata'] = False
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
-CORES = multiprocessing.cpu_count() // 2
+CORES = multiprocessing.cpu_count() #// 2
 seed = args.seed
 
 dataset = args.dataset

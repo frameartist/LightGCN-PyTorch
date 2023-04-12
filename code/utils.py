@@ -26,7 +26,7 @@ try:
     sample_ext = True
 except:
     world.cprint("Cpp extension not loaded")
-    sample_ext = False
+    sample_ext = True # Should be false, but not using cpp sampling plugin 
 
 
 class BPRLoss:

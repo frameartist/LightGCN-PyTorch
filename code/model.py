@@ -249,7 +249,7 @@ class RatingGCN(BasicModel):
             print('use pretarined data')
         self.f = nn.Sigmoid()
         self.Graph = self.dataset.getSparseGraph()
-        print(f"lgn is already to go(dropout:{self.config['dropout']})")
+        print(f"lmse is already to go(dropout:{self.config['dropout']})")
 
         # print("save_txt")
     def __dropout_x(self, x, keep_prob):
@@ -333,8 +333,9 @@ class RatingGCN(BasicModel):
         
         mse_loss = nn.MSELoss()
         
-        loss = mse_loss(item_scores,actual_score.float())
         
+        loss = mse_loss(item_scores,actual_score.float())
+        reg_loss = 0
         return loss, reg_loss
        
     def forward(self, users, items):
