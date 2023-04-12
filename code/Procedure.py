@@ -5,6 +5,9 @@ Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
 
 Design training and test process
+
+Modified on April 12, 2023
+Sean Qiyuan Xiong
 '''
 import world
 import numpy as np
@@ -20,8 +23,7 @@ import multiprocessing
 from sklearn.metrics import roc_auc_score
 
 
-CORES = multiprocessing.cpu_count() #// 2
-
+CORES = multiprocessing.cpu_count()
 
 def BPR_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=None):
     Recmodel = recommend_model
@@ -65,7 +67,7 @@ def MSE_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=N
         S = utils.UniformSample_original(dataset)
     users = torch.Tensor(S[:, 0]).long()
     items = torch.Tensor(S[:, 1]).long()
-    ratings = torch.Tensor(S[:, 2]).long()
+    ratings = torch.Tensor(S[:, 2]).float() # NOT long!!!!!!!!
 
     users = users.to(world.device)
     items = items.to(world.device)
