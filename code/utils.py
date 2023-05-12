@@ -17,16 +17,18 @@ from model import PairWiseModel
 from sklearn.metrics import roc_auc_score
 import random
 import os
+
 try:
     from cppimport import imp_from_filepath
     from os.path import join, dirname
     path = join(dirname(__file__), "sources/sampling.cpp")
     sampling = imp_from_filepath(path)
     sampling.seed(world.seed)
+    world.cprint("Cpp extension loaded")
     sample_ext = True
 except:
     world.cprint("Cpp extension not loaded")
-    sample_ext = True # Should be false, but not using cpp sampling plugin 
+    sample_ext = False
 
 
 class BPRLoss:
@@ -61,6 +63,7 @@ class MSELoss:
     def stageOne(self, users, items, actual_score):
         loss, reg_loss = self.model.mse_loss(users, items, actual_score)
         reg_loss = reg_loss*self.weight_decay
+        loss = loss ** 0.5
         loss = loss + reg_loss
 
         self.opt.zero_grad()
@@ -75,12 +78,11 @@ def UniformSample_original(dataset, neg_ratio = 1):
     dataset : BasicDataset
     allPos = dataset.allPos
     start = time()
-    if sample_ext: 
-        # Not using this
-        '''S = sampling.sample_negative(dataset.n_users, dataset.m_items,
-                                     dataset.trainDataSize, allPos, neg_ratio)'''
-        # Use this
+    if world.model_name in ('lmse','rgn','mf'):
         S = UniformSampleForMSE(dataset)
+    elif sample_ext: 
+        S = sampling.sample_negative(dataset.n_users, dataset.m_items,
+                                     dataset.trainDataSize, allPos, neg_ratio)
     else:
         S = UniformSample_original_python(dataset)
     return S
@@ -120,11 +122,6 @@ def UniformSample_original_python(dataset):
     return np.array(S)
 
 def UniformSampleForMSE(dataset):
-    """
-    the original impliment of BPR Sampling in LightGCN
-    :return:
-        np.array
-    """
     total_start = time()
     dataset : BasicDataset
     user_num = dataset.trainDataSize
@@ -153,7 +150,7 @@ def set_seed(seed):
 def getFileName():
     if world.model_name == 'mf':
         file = f"mf-{world.dataset}-{world.config['latent_dim_rec']}.pth.tar"
-    elif world.model_name == 'lgn' or world.model_name == 'lmse':
+    elif world.model_name in ('lgn','lmse','gcn'):
         file = f"lgn-{world.dataset}-{world.config['lightGCN_n_layers']}-{world.config['latent_dim_rec']}.pth.tar"
     return os.path.join(world.FILE_PATH,file)
 

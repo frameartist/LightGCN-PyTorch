@@ -2,6 +2,7 @@ import world
 import utils
 from world import cprint
 import torch
+from torch import nn
 import numpy as np
 from tensorboardX import SummaryWriter
 import time
@@ -15,10 +16,17 @@ print(">>SEED:", world.seed)
 import register
 from register import dataset
 
+
+from sklearn.metrics import mean_squared_error 
+df=pd.read_csv("ml_result_test.csv")
+df['predicted']=np.clip(df['predicted'],0,5)
+print("YOOO RMSE FINAL training:",mean_squared_error(df['actual'], df['predicted'], squared=False))
+
 Recmodel = register.MODELS[world.model_name](world.config, dataset)
 Recmodel = Recmodel.to(world.device)
 bpr = utils.BPRLoss(Recmodel, world.config)
 mse = utils.MSELoss(Recmodel, world.config)
+
 
 weight_file = utils.getFileName()
 print(f"load and save to {weight_file}")
@@ -49,19 +57,34 @@ try:
         output_information = Procedure.MSE_train_original(dataset, Recmodel, mse, epoch, neg_k=Neg_k,w=w)
         print(f'EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}')
         torch.save(Recmodel.state_dict(), weight_file)
-    from sklearn.metrics import mean_squared_error 
+
+    (users_emb, items_emb, 
+        userEmb0,  itemsEmb0) = Recmodel.getEmbedding(torch.Tensor(dataset.trainUser).long(), torch.Tensor(dataset.trainItem).long())
+    item_scores = torch.mul(users_emb, items_emb)
+    item_scores = torch.sum(item_scores, dim=1)
+    item_scores = (nn.Sigmoid()(item_scores)) * 5
+    predictions = item_scores.detach().numpy()#np.clip(item_scores.detach().numpy(), 0, 5)
+    print("RMSE FINAL training:",mean_squared_error(dataset.trainRating, predictions, squared=False))
+    df = pd.DataFrame()
+    df['user'] = dataset.trainUser
+    df['item'] = dataset.trainItem
+    df['actual'] = dataset.trainRating
+    df['predicted'] = predictions
+    df.to_csv("ml_result_train.csv")
+
     (users_emb, items_emb, 
         userEmb0,  itemsEmb0) = Recmodel.getEmbedding(torch.Tensor(dataset.testUser).long(), torch.Tensor(dataset.testItem).long())
     item_scores = torch.mul(users_emb, items_emb)
     item_scores = torch.sum(item_scores, dim=1)
-    predictions = np.clip(item_scores.detach().numpy(), 0, 5)
-    print("RMSE",mean_squared_error(predictions, dataset.testRating, squared=False))
+    item_scores = (nn.Sigmoid()(item_scores)) * 5
+    predictions = item_scores.detach().numpy()#np.clip(item_scores.detach().numpy(), 0, 5)
+    print("RMSE FINAL test:",mean_squared_error(dataset.testRating, predictions, squared=False))
     df = pd.DataFrame()
     df['user'] = dataset.testUser
     df['item'] = dataset.testItem
     df['actual'] = dataset.testRating
     df['predicted'] = predictions
-    df.to_csv("ml_result.csv")
+    df.to_csv("ml_result_test.csv")
 finally:
     if world.tensorboard:
         w.close()

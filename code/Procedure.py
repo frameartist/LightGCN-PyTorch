@@ -85,7 +85,7 @@ def MSE_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=N
         cri = mse.stageOne(batch_users, batch_items, batch_ratings)
         aver_loss += cri
         if world.tensorboard:
-            w.add_scalar(f'BPRLoss/BPR', cri, epoch * int(len(users) / world.config['bpr_batch_size']) + batch_i)
+            w.add_scalar(f'MSELoss/MSE', cri, epoch * int(len(users) / world.config['bpr_batch_size']) + batch_i)
     aver_loss = aver_loss / total_batch
     time_info = timer.dict()
     timer.zero()
@@ -108,6 +108,8 @@ def test_one_batch(X):
         
             
 def Test(dataset, Recmodel, epoch, w=None, multicore=0):
+    mseloss = Recmodel.mse_loss(torch.Tensor(dataset.testUser),torch.Tensor(dataset.testItem),torch.Tensor(dataset.testRating),p=True)
+    w.add_scalar('Test/RMSE',mseloss[0].item()**0.5,epoch)
     u_batch_size = world.config['test_u_batch_size']
     dataset: utils.BasicDataset
     testDict: dict = dataset.testDict
@@ -188,7 +190,8 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
                           {str(world.topks[i]): results['precision'][i] for i in range(len(world.topks))}, epoch)
             w.add_scalars(f'Test/NDCG@{world.topks}',
                           {str(world.topks[i]): results['ndcg'][i] for i in range(len(world.topks))}, epoch)
+            
         if multicore == 1:
             pool.close()
-        print(results)
+        #print(results)
         return results

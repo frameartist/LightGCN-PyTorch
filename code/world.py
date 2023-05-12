@@ -4,6 +4,9 @@ Pytorch Implementation of LightGCN in
 Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
+
+Modified on April 12, 2023
+Sean Qiyuan Xiong
 '''
 
 import os
@@ -31,8 +34,8 @@ if not os.path.exists(FILE_PATH):
 
 
 config = {}
-all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book','ml_latest_small']
-all_models  = ['mf', 'lgn', 'lmse']
+all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book','ml_latest_small','indonesia_tourism','mts-library']
+all_models  = ['mf', 'lgn', 'lmse', 'rgn'] # lmse: LightGCN with MSE, gcn: RatingGCN
 # config['batch_size'] = 4096
 config['bpr_batch_size'] = args.bpr_batch
 config['latent_dim_rec'] = args.recdim
@@ -50,7 +53,7 @@ config['bigdata'] = False
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
-CORES = multiprocessing.cpu_count() #// 2
+CORES = multiprocessing.cpu_count()
 seed = args.seed
 
 dataset = args.dataset
@@ -59,9 +62,6 @@ if dataset not in all_dataset:
     raise NotImplementedError(f"Haven't supported {dataset} yet!, try {all_dataset}")
 if model_name not in all_models:
     raise NotImplementedError(f"Haven't supported {model_name} yet!, try {all_models}")
-
-
-
 
 TRAIN_epochs = args.epochs
 LOAD = args.load
@@ -72,8 +72,6 @@ comment = args.comment
 # let pandas shut up
 from warnings import simplefilter
 simplefilter(action="ignore", category=FutureWarning)
-
-
 
 def cprint(words : str):
     print(f"\033[0;30;43m{words}\033[0m")

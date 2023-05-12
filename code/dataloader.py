@@ -409,38 +409,41 @@ class Loader(BasicDataset):
     #     return negItems
 
 class MovieLens(BasicDataset):
-    def __init__(self,config = world.config,path="../data/ml_latest_small/"):
+    def __init__(self,config = world.config,path="../data/ml_latest_small/",filename="ratings.csv", names=["userId","movieId","rating","timestamp"], columns=["userId","movieId","rating"]):
         # train or test
         cprint(f'loading [{path}]')
         self.split = config['A_split']
         self.folds = config['A_n_fold']
         self.mode_dict = {'train': 0, "test": 1}
         self.mode = self.mode_dict['train']
+
+        userId, itemId, rating = columns
         
         # Load train dataset
-        dataset = pd.read_csv(path+"ratings.csv", names=["userId","movieId","rating","timestamp"])
+        dataset = pd.read_csv(path+filename, names=names)
+        dataset = dataset.dropna()
         
         le = LabelEncoder()
-        dataset["userId"] = le.fit_transform(dataset["userId"])
-        dataset["movieId"] = le.fit_transform(dataset["movieId"])
+        dataset[userId] = le.fit_transform(dataset[userId])
+        dataset[itemId] = le.fit_transform(dataset[itemId])
 
-        dataset, test_dataset = train_test_split(dataset, test_size=0.1)
+        dataset, test_dataset = train_test_split(dataset, test_size=0.15)
 
         dataset.to_csv("ml_train.csv")
         test_dataset.to_csv("ml_test.csv")
 
-        users = dataset["userId"]
-        items = dataset["movieId"]
-        ratings = dataset["rating"]
+        users = dataset[userId]
+        items = dataset[itemId]
+        ratings = dataset[rating]
         #+++++++++++++++++++
 
         # Load test dataset
         # test_dataset = pd.read_csv(path+"ratings.csv", names=["userId","movieId","rating","timestamp"])
         # Loaded already^
 
-        test_users = test_dataset["userId"]
-        test_items = test_dataset["movieId"]
-        test_ratings = test_dataset["rating"]
+        test_users = test_dataset[userId]
+        test_items = test_dataset[itemId]
+        test_ratings = test_dataset[rating]
 
         self.n_user = users.max() + 1
         self.m_item = items.max() + 1
@@ -449,8 +452,8 @@ class MovieLens(BasicDataset):
         trainUniqueUsers, trainItem, trainUser, trainRating = users.drop_duplicates(), items, users, ratings
         testUniqueUsers, testItem, testUser, testRating = test_users.drop_duplicates(), test_items, test_users, test_ratings
         
-        self.traindataSize = len(dataset["userId"])
-        self.testDataSize = len(test_dataset["userId"])
+        self.traindataSize = len(dataset[userId])
+        self.testDataSize = len(test_dataset[userId])
 
         self.trainUniqueUsers = np.array(trainUniqueUsers)
         self.trainUser = np.array(trainUser)
@@ -520,34 +523,34 @@ class MovieLens(BasicDataset):
         return torch.sparse.FloatTensor(index, data, torch.Size(coo.shape))
         
     def getSparseGraph(self):
-        print("loading adjacency matrix")
         if self.Graph is None:
-            try:
+            '''try:
                 pre_adj_mat = sp.load_npz(self.path + '/s_pre_adj_mat.npz')
                 print("successfully loaded...")
                 norm_adj = pre_adj_mat
-            except :
-                print("generating adjacency matrix")
-                s = time()
-                adj_mat = sp.dok_matrix((self.n_users + self.m_items, self.n_users + self.m_items), dtype=np.float32)
-                adj_mat = adj_mat.tolil()
-                R = self.UserItemNet.tolil()
-                adj_mat[:self.n_users, self.n_users:] = R
-                adj_mat[self.n_users:, :self.n_users] = R.T
-                adj_mat = adj_mat.todok()
-                # adj_mat = adj_mat + sp.eye(adj_mat.shape[0])
-                
-                rowsum = np.array(adj_mat.sum(axis=1))
-                d_inv = np.power(rowsum, -0.5).flatten()
-                d_inv[np.isinf(d_inv)] = 0.
-                d_mat = sp.diags(d_inv)
-                
-                norm_adj = d_mat.dot(adj_mat)
-                norm_adj = norm_adj.dot(d_mat)
-                norm_adj = norm_adj.tocsr()
-                end = time()
-                print(f"costing {end-s}s, saved norm_mat...")
-                sp.save_npz(self.path + '/s_pre_adj_mat.npz', norm_adj)
+            except :'''
+            print("generating adjacency matrix")
+            s = time()
+            adj_mat = sp.dok_matrix((self.n_users + self.m_items, self.n_users + self.m_items), dtype=np.float32)
+            adj_mat = adj_mat.tolil()
+            R = self.UserItemNet.tolil()
+            adj_mat[:self.n_users, self.n_users:] = R
+            adj_mat[self.n_users:, :self.n_users] = R.T
+            adj_mat = adj_mat.todok()
+            # adj_mat = adj_mat + sp.eye(adj_mat.shape[0])
+            
+            rowsum = np.array(adj_mat.sum(axis=1))
+            d_inv = np.power(rowsum, -0.5).flatten()
+            d_inv[np.isinf(d_inv)] = 0.
+            d_mat = sp.diags(d_inv)
+
+            #norm_adj = adj_mat.tocsr() / 100
+            norm_adj = d_mat.dot(adj_mat)
+            norm_adj = norm_adj.dot(d_mat)
+            norm_adj = norm_adj.tocsr()
+            end = time()
+            print(f"costing {end-s}s, saved norm_mat...")
+            sp.save_npz(self.path + '/s_pre_adj_mat.npz', norm_adj)
 
             if self.split == True:
                 self.Graph = self._split_A_hat(norm_adj)
@@ -590,5 +593,3 @@ class MovieLens(BasicDataset):
         for user in users:
             posItems.append(self.UserItemNet[user].nonzero()[1])
         return posItems
-
-    
