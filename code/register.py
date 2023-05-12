@@ -13,9 +13,7 @@ elif world.dataset == 'ml_latest_small':
     dataset = dataloader.MovieLens()
 elif world.dataset == 'indonesia_tourism':
     dataset = dataloader.MovieLens(path="../data/indonesia_tourism/",filename="tourism_rating.csv", names=["User_Id","Place_Id","Place_Ratings"],columns=["User_Id","Place_Id","Place_Ratings"])
-elif world.dataset == 'mts-library':
-    dataset = dataloader.MovieLens(path="../data/mts-library/",filename="interactions.csv", names=["user_id","item_id","progress","rating","start_date"],columns=["user_id","item_id","rating"])
-
+    
 print('===========config================')
 pprint(world.config)
 print("cores for test:", world.CORES)

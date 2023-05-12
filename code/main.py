@@ -18,9 +18,6 @@ from register import dataset
 
 
 from sklearn.metrics import mean_squared_error 
-df=pd.read_csv("ml_result_test.csv")
-df['predicted']=np.clip(df['predicted'],0,5)
-print("YOOO RMSE FINAL training:",mean_squared_error(df['actual'], df['predicted'], squared=False))
 
 Recmodel = register.MODELS[world.model_name](world.config, dataset)
 Recmodel = Recmodel.to(world.device)
@@ -53,38 +50,38 @@ try:
         if epoch %10 == 0:
             cprint("[TEST]")
             Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
-        #output_information = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
-        output_information = Procedure.MSE_train_original(dataset, Recmodel, mse, epoch, neg_k=Neg_k,w=w)
+        output_information = Procedure.MSE_train_original(dataset, Recmodel, mse, epoch, neg_k=Neg_k,w=w) if world.dataset == "lmse" or world.config['mse'] else Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
         print(f'EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}')
         torch.save(Recmodel.state_dict(), weight_file)
 
-    (users_emb, items_emb, 
-        userEmb0,  itemsEmb0) = Recmodel.getEmbedding(torch.Tensor(dataset.trainUser).long(), torch.Tensor(dataset.trainItem).long())
-    item_scores = torch.mul(users_emb, items_emb)
-    item_scores = torch.sum(item_scores, dim=1)
-    item_scores = (nn.Sigmoid()(item_scores)) * 5
-    predictions = item_scores.detach().numpy()#np.clip(item_scores.detach().numpy(), 0, 5)
-    print("RMSE FINAL training:",mean_squared_error(dataset.trainRating, predictions, squared=False))
-    df = pd.DataFrame()
-    df['user'] = dataset.trainUser
-    df['item'] = dataset.trainItem
-    df['actual'] = dataset.trainRating
-    df['predicted'] = predictions
-    df.to_csv("ml_result_train.csv")
+    if world.model_name == "lmse" or world.config['mse']:
+        (users_emb, items_emb, 
+            userEmb0,  itemsEmb0) = Recmodel.getEmbedding(torch.Tensor(dataset.trainUser).long(), torch.Tensor(dataset.trainItem).long())
+        item_scores = torch.mul(users_emb, items_emb)
+        item_scores = torch.sum(item_scores, dim=1)
+        item_scores = ((nn.Sigmoid()(item_scores)) * 5) if world.config['sigmoid'] else item_scores
+        predictions = np.clip(item_scores.detach().numpy(), 0, 5) if world.config['clip'] else item_scores.detach().numpy()
+        print("RMSE FINAL training:",mean_squared_error(dataset.trainRating, predictions, squared=False))
+        df = pd.DataFrame()
+        df['user'] = dataset.trainUser
+        df['item'] = dataset.trainItem
+        df['actual'] = dataset.trainRating
+        df['predicted'] = predictions
+        df.to_csv("ml_result_train.csv")
 
-    (users_emb, items_emb, 
-        userEmb0,  itemsEmb0) = Recmodel.getEmbedding(torch.Tensor(dataset.testUser).long(), torch.Tensor(dataset.testItem).long())
-    item_scores = torch.mul(users_emb, items_emb)
-    item_scores = torch.sum(item_scores, dim=1)
-    item_scores = (nn.Sigmoid()(item_scores)) * 5
-    predictions = item_scores.detach().numpy()#np.clip(item_scores.detach().numpy(), 0, 5)
-    print("RMSE FINAL test:",mean_squared_error(dataset.testRating, predictions, squared=False))
-    df = pd.DataFrame()
-    df['user'] = dataset.testUser
-    df['item'] = dataset.testItem
-    df['actual'] = dataset.testRating
-    df['predicted'] = predictions
-    df.to_csv("ml_result_test.csv")
+        (users_emb, items_emb, 
+            userEmb0,  itemsEmb0) = Recmodel.getEmbedding(torch.Tensor(dataset.testUser).long(), torch.Tensor(dataset.testItem).long())
+        item_scores = torch.mul(users_emb, items_emb)
+        item_scores = torch.sum(item_scores, dim=1)
+        item_scores = ((nn.Sigmoid()(item_scores)) * 5) if world.config['sigmoid'] else item_scores
+        predictions = np.clip(item_scores.detach().numpy(), 0, 5) if world.config['clip'] else item_scores.detach().numpy()
+        print("RMSE FINAL test:",mean_squared_error(dataset.testRating, predictions, squared=False))
+        df = pd.DataFrame()
+        df['user'] = dataset.testUser
+        df['item'] = dataset.testItem
+        df['actual'] = dataset.testRating
+        df['predicted'] = predictions
+        df.to_csv("ml_result_test.csv")
 finally:
     if world.tensorboard:
         w.close()

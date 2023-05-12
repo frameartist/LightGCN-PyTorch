@@ -480,7 +480,7 @@ class MovieLens(BasicDataset):
         # pre-calculate
         self._allPos = self.getUserPosItems(list(range(self.n_user)))
         self.__testDict = self.__build_test()
-        print(f"{world.dataset} is ready to go, ml")
+        print(f"{world.dataset} is ready to go")
     
     @property
     def n_users(self):

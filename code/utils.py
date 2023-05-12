@@ -78,7 +78,7 @@ def UniformSample_original(dataset, neg_ratio = 1):
     dataset : BasicDataset
     allPos = dataset.allPos
     start = time()
-    if world.model_name in ('lmse','rgn','mf'):
+    if world.model_name == "lmse" or world.config['mse']:
         S = UniformSampleForMSE(dataset)
     elif sample_ext: 
         S = sampling.sample_negative(dataset.n_users, dataset.m_items,

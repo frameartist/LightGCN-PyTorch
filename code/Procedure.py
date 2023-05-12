@@ -7,7 +7,7 @@ Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network 
 Design training and test process
 
 Modified on April 12, 2023
-Sean Qiyuan Xiong
+FTEC Final Year Project Group N
 '''
 import world
 import numpy as np
@@ -108,8 +108,6 @@ def test_one_batch(X):
         
             
 def Test(dataset, Recmodel, epoch, w=None, multicore=0):
-    mseloss = Recmodel.mse_loss(torch.Tensor(dataset.testUser),torch.Tensor(dataset.testItem),torch.Tensor(dataset.testRating),p=True)
-    w.add_scalar('Test/RMSE',mseloss[0].item()**0.5,epoch)
     u_batch_size = world.config['test_u_batch_size']
     dataset: utils.BasicDataset
     testDict: dict = dataset.testDict
@@ -193,5 +191,9 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             
         if multicore == 1:
             pool.close()
-        #print(results)
+        if world.model_name == 'lmse' or world.config['mse']:
+            mseloss = Recmodel.mse_loss(torch.Tensor(dataset.testUser),torch.Tensor(dataset.testItem),torch.Tensor(dataset.testRating),p=True)
+            w.add_scalar('Test/RMSE',mseloss[0].item()**0.5,epoch)
+        else: 
+            print(results)
         return results

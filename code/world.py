@@ -6,7 +6,7 @@ Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
 
 Modified on April 12, 2023
-Sean Qiyuan Xiong
+FTEC Final Year Project Group N
 '''
 
 import os
@@ -34,8 +34,8 @@ if not os.path.exists(FILE_PATH):
 
 
 config = {}
-all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book','ml_latest_small','indonesia_tourism','mts-library']
-all_models  = ['mf', 'lgn', 'lmse', 'rgn'] # lmse: LightGCN with MSE, gcn: RatingGCN
+all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book','ml_latest_small','indonesia_tourism']
+all_models  = ['mf', 'lgn', 'lmse'] # lmse: LightGCN with MSE
 # config['batch_size'] = 4096
 config['bpr_batch_size'] = args.bpr_batch
 config['latent_dim_rec'] = args.recdim
@@ -50,6 +50,9 @@ config['decay'] = args.decay
 config['pretrain'] = args.pretrain
 config['A_split'] = False
 config['bigdata'] = False
+config['mse'] = args.mse
+config['sigmoid'] = args.sigmoid
+config['clip'] = args.clip
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
