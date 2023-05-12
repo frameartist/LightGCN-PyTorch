@@ -28,7 +28,7 @@ Without sigmoid activation but clips output:
 
 Default model is `lmse` which is our modified model
 
-#### Below iś the README.md from the authors of the original [LightGCN-PyTorch](https://github.com/gusye1234/LightGCN-PyTorch) Repo
+#### Below is the README.md from the authors of the original [LightGCN-PyTorch](https://github.com/gusye1234/LightGCN-PyTorch) Repo
 #### Update
 
 2020-09:
