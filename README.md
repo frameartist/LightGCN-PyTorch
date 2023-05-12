@@ -1,4 +1,25 @@
 
+## CUHK FTEC Final Year Project 2022-2023 Group N
+
+## Introduction
+Implementation of the Modified LightGCN model using MSE Loss
+
+## Setup
+Tested on Python 3.6.5
+Install dependencies using
+`pip install -r requirements.txt`
+If torch==1.8.0 not found, use provided whl
+Use pip to install other dependencies if `ImportError` occurs
+
+## Run model
+`cd code`
+With sigmoid activation:
+`python main.py --decay=0 --lr=0.0003 --layer=3 --seed=2020 --dataset="ml_latest_small" --topks="[20]" --recdim=64 --epochs=250 --sigmoid=1`
+Without sigmoid activation but clips output:
+`python main.py --decay=0 --lr=0.0003 --layer=3 --seed=2020 --dataset="ml_latest_small" --topks="[20]" --recdim=64 --epochs=250 --sigmoid=0 --clip=1`
+Default model is `lmse` which is our modified model
+
+#### Below iś the README.md from the authors of the original [LightGCN-PyTorch](https://github.com/gusye1234/LightGCN-PyTorch) Repo
 #### Update
 
 2020-09:

@@ -4,6 +4,9 @@ Pytorch Implementation of LightGCN in
 Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
 
 @author: Jianbai Ye (gusye@mail.ustc.edu.cn)
+
+Modified on April 12, 2023
+FTEC Final Year Project Group N
 '''
 import argparse
 

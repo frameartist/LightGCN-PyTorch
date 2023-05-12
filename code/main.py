@@ -50,7 +50,7 @@ try:
         if epoch %10 == 0:
             cprint("[TEST]")
             Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
-        output_information = Procedure.MSE_train_original(dataset, Recmodel, mse, epoch, neg_k=Neg_k,w=w) if world.dataset == "lmse" or world.config['mse'] else Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
+        output_information = Procedure.MSE_train_original(dataset, Recmodel, mse, epoch, neg_k=Neg_k,w=w) if world.model_name == "lmse" or world.config['mse'] else Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
         print(f'EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}')
         torch.save(Recmodel.state_dict(), weight_file)
 

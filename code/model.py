@@ -86,7 +86,7 @@ class PureMF(BasicModel):
         mse_loss = nn.MSELoss()
         loss = mse_loss(item_scores,actual_score.float())
         if p:
-            print(loss**0.5)
+            print("Test loss:", loss**0.5)
         return loss, reg_loss
         
     def forward(self, users, items):
@@ -349,7 +349,7 @@ class LightGCNMSE(BasicModel):
         
         mse_loss = nn.MSELoss()
         loss = mse_loss(item_scores,actual_score.float())
-        if p: print(loss**0.5)
+        if p: print("Test loss:", loss**0.5)
         return loss, reg_loss
        
     def forward(self, users, items):

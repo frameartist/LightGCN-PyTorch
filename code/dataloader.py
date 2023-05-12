@@ -6,6 +6,9 @@ Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network 
 @author: Shuxian Bi (stanbi@mail.ustc.edu.cn),Jianbai Ye (gusye@mail.ustc.edu.cn)
 Design Dataset here
 Every dataset's index has to start at 0
+
+Modified on April 12, 2023
+FTEC Final Year Project Group N
 """
 import os
 from os.path import join
